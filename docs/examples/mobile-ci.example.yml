@@ -1,0 +1,67 @@
+# EXAMPLE ONLY - not active in this repo (it lives outside .github/workflows).
+# Sketch of a nightly Appium run for the Island Club app on a real-device cloud.
+# Assumes the app repo's build workflow publishes signed builds as artifacts and the
+# Appium + WebdriverIO suite lives in mobile-tests/.
+
+name: Mobile regression (nightly)
+
+on:
+  schedule:
+    - cron: '0 9 * * *'   # 2:00 AM Pacific
+  workflow_dispatch:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ios, android]
+    env:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download latest signed build
+        uses: actions/download-artifact@v4
+        with:
+          name: island-club-${{ matrix.platform }}-release
+          github-token: ${{ secrets.APP_REPO_TOKEN }}
+          repository: example-org/island-club-app
+          run-id: ${{ vars.LATEST_APP_BUILD_RUN_ID }}
+          path: build/
+
+      - name: Upload build to the device cloud
+        id: upload
+        run: |
+          FILE=$(ls build/*.{ipa,apk} 2>/dev/null | head -1)
+          APP_URL=$(curl -s -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
+            -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
+            -F "file=@$FILE" | jq -r .app_url)
+          echo "app_url=$APP_URL" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile-tests/package-lock.json
+
+      - name: Run Appium suite on real devices
+        working-directory: mobile-tests
+        env:
+          APP_URL: ${{ steps.upload.outputs.app_url }}
+          PLATFORM: ${{ matrix.platform }}
+          TEST_MEMBER_EMAIL: ${{ secrets.STAGING_TEST_MEMBER_EMAIL }}
+          TEST_MEMBER_PASSWORD: ${{ secrets.STAGING_TEST_MEMBER_PASSWORD }}
+        run: |
+          npm ci
+          npx wdio run wdio.browserstack.conf.ts
+
+      - name: Publish results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-${{ matrix.platform }}-results
+          path: mobile-tests/reports/
