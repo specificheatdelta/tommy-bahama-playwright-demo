@@ -19,7 +19,7 @@ A small, working example of how I would start a test automation practice for [to
 
 20 tests: 17 on desktop Chrome (1440×900) and 3 smoke checks on a Pixel 7 mobile viewport. The full run takes about one minute.
 
-The [test strategy](docs/test-strategy.md) explains what a full practice would add, and the [mobile automation plan](docs/mobile-automation-plan.md) covers the native app.
+The [test strategy](docs/test-strategy.md) explains what a full practice would add, and the [mobile automation plan](docs/mobile-automation-plan.md) covers the native app. Each release gets its own plan from the [test plan template](docs/test-plan-template.md).
 
 ## Run it
 

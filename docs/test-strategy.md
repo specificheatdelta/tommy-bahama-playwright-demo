@@ -14,7 +14,7 @@ The strategy sets how we test the product for the next year or more. A test plan
 | Owner | QA lead or manager, signed off by engineering leadership | QA engineer on the feature team |
 | Example line | Every change to checkout runs API and UI smoke in under 10 minutes, blocking merge | Gift card redemption: 12 cases on staging, Nov 18 to 20, sign-off by release manager |
 
-In ISO/IEC/IEEE 29119 terms this is the project test strategy. Each release's test plan cites it rather than repeating it.
+In ISO/IEC/IEEE 29119 terms this is the project test strategy. Each release's test plan cites it rather than repeating it; start one from the [test plan template](test-plan-template.md).
 
 ## Purpose and scope
 
